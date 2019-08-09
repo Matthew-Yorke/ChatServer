@@ -36,6 +36,8 @@
 //*********************************************************************************************************************
 Server::Server()
 {
+   mpDatabase = new Database();
+
    InitializeWindowsSocket();
    CreateListenerSocket();
    BindListenerSocket();
@@ -256,7 +258,6 @@ void Server::HandleClient(SOCKET theClientSocket)
       }
 
       // Echo message back to client.
-      //send(theClientSocket, buffer, bytesRecieved + 1, 0);
       BroadcastSend(buffer, bytesRecieved);
    }
 
@@ -286,7 +287,6 @@ void Server::BroadcastSend(char* theBuffer, int theBystesRecieved)
    mMutex.lock();
    for (auto iter = mConnectedClients.begin(); iter != mConnectedClients.end(); ++iter)
    {
-      //send(*iter, theBuffer, theBystesRecieved, 0);
       send(*iter, theBuffer, theBystesRecieved, 0);
    }
    mMutex.unlock();

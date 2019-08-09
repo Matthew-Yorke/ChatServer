@@ -23,6 +23,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include "Database.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -209,6 +210,9 @@ class Server
 
       // Mutex to block critical data.
       std::mutex mMutex;
+
+      // The database storing the chat program information.
+      Database* mpDatabase;
 
 //*********************************************************************************************************************
 // End - Member Variables
