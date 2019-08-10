@@ -1,0 +1,14 @@
+﻿  stdafx.cpp
+  AboutDialog.cpp
+  ChatServer.cpp
+  Database.cpp
+c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(93): warning C4101: 'err': unreferenced local variable
+c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(100): warning C4101: 'err': unreferenced local variable
+  MainDialog.cpp
+  Server.cpp
+  Generating code
+  1037 of 1055 functions (98.3%) were compiled, the rest were copied from previous compilation.
+    41 functions were new in current compilation
+    4 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  ChatServer.vcxproj -> C:\Users\Yorke\source\repos\ChatServer\ChatServer\x64\Release\ChatServer.exe

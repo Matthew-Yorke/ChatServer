@@ -1,0 +1,7 @@
+﻿  Database.cpp
+c:\users\yorke\source\repos\temporary chat server\chatserver\chatserver\database.cpp(93): warning C4101: 'err': unreferenced local variable
+c:\users\yorke\source\repos\temporary chat server\chatserver\chatserver\database.cpp(99): warning C4101: 'err': unreferenced local variable
+  MainDialog.cpp
+  Server.cpp
+  Generating Code...
+mysqlcppconn8.lib(mysqlcppconn8-2-vs14.dll) : fatal error LNK1112: module machine type 'x64' conflicts with target machine type 'x86'
