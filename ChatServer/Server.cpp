@@ -294,6 +294,7 @@ void Server::ListenForConnections()
 void Server::HandleClient(SOCKET theClientSocket)
 {
    char buffer[8192];
+   std::string string;
    int bytesRecieved;
 
    while (true)
@@ -327,8 +328,24 @@ void Server::HandleClient(SOCKET theClientSocket)
          break;
       }
 
-      // Echo message back to client.
-      BroadcastSend(buffer, bytesRecieved);
+      string = buffer;
+
+      if(string == "message")
+      {
+         // Wait to receive the actual message.
+         ZeroMemory(buffer, 8192);
+         bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
+
+         // Send information to observers.
+         mMutex.lock();
+         mpServerInformation->type = Information::Message;
+         mpServerInformation->message = buffer;
+         NotifyObservers();
+         mMutex.unlock();
+
+         // Echo message back to client.
+         BroadcastSend(buffer, bytesRecieved);
+      }
    }
 
    closesocket(theClientSocket);
@@ -353,7 +370,6 @@ void Server::HandleClient(SOCKET theClientSocket)
 //*********************************************************************************************************************
 void Server::BroadcastSend(char* theBuffer, int theBystesRecieved)
 {
-   std::string test = "String Test!";
    mMutex.lock();
    for (auto iter = mConnectedClients.begin(); iter != mConnectedClients.end(); ++iter)
    {

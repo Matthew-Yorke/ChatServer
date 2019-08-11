@@ -7,6 +7,6 @@ c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(100): 
   MainDialog.cpp
   Server.cpp
   Generating code
-  All 1218 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 1222 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   ChatServer.vcxproj -> C:\Users\Yorke\source\repos\ChatServer\ChatServer\x64\Release\ChatServer.exe

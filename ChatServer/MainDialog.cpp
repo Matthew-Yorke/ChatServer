@@ -307,4 +307,11 @@ void MainDialog::Notify(Information* thepServerInformation)
       currentText += " has connected to the chat.\r\n";
       SetDlgItemText(IDC_LOG_EDIT_BOX, currentText);
    }
+   else if (thepServerInformation->type == Information::Message)
+   {
+      CString currentText = L"";
+      GetDlgItemText(IDC_LOG_EDIT_BOX, currentText);
+      currentText += thepServerInformation->message.c_str();
+      SetDlgItemText(IDC_LOG_EDIT_BOX, currentText);
+   }
 }
