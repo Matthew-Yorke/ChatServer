@@ -40,6 +40,7 @@ MainDialog::MainDialog(CWnd* thepParent /*=nullptr*/)
 {
    mpDatabase = new Database();
    mpServer = new Server();
+   mpServer->RegisterObserver(this);
 	mHIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -279,5 +280,31 @@ void MainDialog::OnStartButton()
       }
 
       mpServer->StartServer();
+   }
+}
+
+//*********************************************************************************************************************
+//
+// Function: Notify
+//
+// Description:
+//    The system calls this function to obtain the cursor to display while the user drags the minimized windows.
+//
+// Arguments:
+//    N/A
+//
+// Return:
+//    TODO: Add description.
+//
+//*********************************************************************************************************************
+void MainDialog::Notify(Information* thepServerInformation)
+{
+   if(thepServerInformation->type == Information::Connection)
+   {
+      CString currentText = L"";
+      GetDlgItemText(IDC_LOG_EDIT_BOX, currentText);
+      currentText += thepServerInformation->user.c_str();
+      currentText += " has connected to the chat.\r\n";
+      SetDlgItemText(IDC_LOG_EDIT_BOX, currentText);
    }
 }

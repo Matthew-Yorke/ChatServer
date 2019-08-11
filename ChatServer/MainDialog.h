@@ -17,7 +17,7 @@
 #include "Database.h"
 #include "Server.h"
 
-class MainDialog : public CDialogEx
+class MainDialog : public CDialogEx, Observer
 {
 
 // Dialog Data
@@ -29,8 +29,6 @@ class MainDialog : public CDialogEx
 //*********************************************************************************************************************
 // Start - Methods
 //*********************************************************************************************************************
-
-// Construction
 
    public:
 	
@@ -182,7 +180,21 @@ class MainDialog : public CDialogEx
 
    private:
 
-      // There are currently no private methods.
+      //***************************************************************************************************************
+      //
+      // Method: Notify
+      //
+      // Description:
+      //    Register an observer
+      //
+      // Arguments:
+      //    thepObserver - the observer object to be registered.
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void Notify(Information* thepServerInformation) override;
 
 //*********************************************************************************************************************
 // End - Methods
@@ -223,6 +235,9 @@ class MainDialog : public CDialogEx
 
       // TODO: Add description.
       int mPortNumber;
+
+      // TODO: Add description.
+      CString mLogger;
 
 //*********************************************************************************************************************
 // End - Member Variables

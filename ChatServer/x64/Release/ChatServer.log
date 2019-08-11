@@ -7,8 +7,6 @@ c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(100): 
   MainDialog.cpp
   Server.cpp
   Generating code
-  1037 of 1055 functions (98.3%) were compiled, the rest were copied from previous compilation.
-    41 functions were new in current compilation
-    4 functions had inline decision re-evaluated but remain unchanged
+  All 1218 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   ChatServer.vcxproj -> C:\Users\Yorke\source\repos\ChatServer\ChatServer\x64\Release\ChatServer.exe

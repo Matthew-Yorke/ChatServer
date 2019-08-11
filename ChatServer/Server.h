@@ -24,10 +24,11 @@
 #include <thread>
 #include <mutex>
 #include "Database.h"
+#include "Subject.h"
 
 #pragma comment (lib, "ws2_32.lib")
 
-class Server
+class Server : Subject
 {
 
 //*********************************************************************************************************************
@@ -85,6 +86,38 @@ class Server
       //
       //***************************************************************************************************************
       void StartServer();
+
+      //***************************************************************************************************************
+      //
+      // Method: RegisterObserver
+      //
+      // Description:
+      //    Register an observer
+      //
+      // Arguments:
+      //    thepObserver - the observer object to be registered.
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void RegisterObserver(Observer* thepObserver) override;
+
+      //***************************************************************************************************************
+      //
+      // Method: RemoveObserver
+      //
+      // Description:
+      //    Unregister an observer
+      //
+      // Arguments:
+      //    thepObserver - the observer object to be unregistered
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void RemoveObserver(Observer* thepObserver) override;
 
    protected:
 
@@ -197,6 +230,22 @@ class Server
       //***************************************************************************************************************
       void BroadcastSend(char* theBuffer, int theBystesRecieved);
 
+      //***************************************************************************************************************
+      //
+      // Method: NotifyObservers
+      //
+      // Description:
+      //    Notify all the registered observers when a change happens
+      //
+      // Arguments:
+      //    thepParent - TODO: Add description.
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void NotifyObservers() override;
+
 //*********************************************************************************************************************
 // End - Methods
 //*********************************************************************************************************************
@@ -218,6 +267,9 @@ class Server
       // The socket to listen for connections.
       SOCKET mListeningSocket;
 
+      // Thread to handle listening for connections.
+      std::thread* mListenThread;
+
       // Vector containing the list of all active threads.
       std::vector<std::unique_ptr<std::thread>> mClientThreads;
 
@@ -226,6 +278,12 @@ class Server
 
       // Mutex to block critical data.
       std::mutex mMutex;
+
+      // List of objects observing this class.
+      std::vector<Observer*> mObservers;
+
+      // Object to hold server message information to pass to all observers.
+      Information* mpServerInformation;
 
 //*********************************************************************************************************************
 // End - Member Variables

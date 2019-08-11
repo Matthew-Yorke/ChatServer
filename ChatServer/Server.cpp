@@ -37,6 +37,7 @@
 //*********************************************************************************************************************
 Server::Server()
 {
+   mpServerInformation = new Information();
 }
 
 //*********************************************************************************************************************
@@ -56,6 +57,9 @@ Server::Server()
 //*********************************************************************************************************************
 Server::~Server()
 {
+   mListenThread->join();
+   delete mListenThread;
+
    for(auto iter = mClientThreads.begin(); iter != mClientThreads.end(); ++iter)
    {
       (*iter)->join();
@@ -64,6 +68,8 @@ Server::~Server()
    closesocket(mListeningSocket);
 
    WSACleanup();
+
+   delete mpServerInformation;
 }
 
 //***************************************************************************************************************
@@ -85,7 +91,50 @@ void Server::StartServer()
    InitializeWindowsSocket();
    CreateListenerSocket();
    BindListenerSocket();
-   ListenForConnections();
+   mListenThread = new std::thread(&Server::ListenForConnections, this);
+}
+
+//***************************************************************************************************************
+//
+// Method: RegisterObserver
+//
+// Description:
+//    Register an observer
+//
+// Arguments:
+//    thepObserver - the observer object to be registered.
+//
+// Return:
+//    N/A
+//
+//***************************************************************************************************************
+void Server::RegisterObserver(Observer* thepObserver)
+{
+   mObservers.push_back(thepObserver);
+}
+
+//***************************************************************************************************************
+//
+// Method: RemoveObserver
+//
+// Description:
+//    Unregister an observer
+//
+// Arguments:
+//    thepObserver - the observer object to be unregistered
+//
+// Return:
+//    N/A
+//
+//***************************************************************************************************************
+void Server::RemoveObserver(Observer* thepObserver)
+{
+   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
+
+    if (iterator != mObservers.end())
+    {
+        mObservers.erase(iterator);
+    }
 }
 
 //*********************************************************************************************************************
@@ -218,6 +267,10 @@ void Server::ListenForConnections()
 
          mMutex.lock();
          mConnectedClients.push_back(clientSocket);
+         mpServerInformation->type = Information::Connection;
+         mpServerInformation->message = "";
+         mpServerInformation->user = host;
+         NotifyObservers();
          mMutex.unlock();
          mClientThreads.emplace_back(new std::thread(&Server::HandleClient, this, clientSocket));
       }
@@ -307,4 +360,26 @@ void Server::BroadcastSend(char* theBuffer, int theBystesRecieved)
       send(*iter, theBuffer, theBystesRecieved, 0);
    }
    mMutex.unlock();
+}
+
+//***************************************************************************************************************
+//
+// Method: NotifyObservers
+//
+// Description:
+//    Notify all the registered observers when a change happens
+//
+// Arguments:
+//    thepParent - TODO: Add description.
+//
+// Return:
+//    N/A
+//
+//***************************************************************************************************************
+void Server::NotifyObservers()
+{
+   for (Observer* observer : mObservers)
+   {
+        observer->Notify(mpServerInformation);
+    }
 }
