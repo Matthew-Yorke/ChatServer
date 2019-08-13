@@ -38,6 +38,8 @@
 Server::Server()
 {
    mpServerInformation = new Information();
+   mpDatabase = new Database();
+   mIsStarted = false;
 }
 
 //*********************************************************************************************************************
@@ -70,6 +72,7 @@ Server::~Server()
    WSACleanup();
 
    delete mpServerInformation;
+   delete mpDatabase;
 }
 
 //***************************************************************************************************************
@@ -91,6 +94,7 @@ void Server::StartServer()
    InitializeWindowsSocket();
    CreateListenerSocket();
    BindListenerSocket();
+   mIsStarted = true;
    mListenThread = new std::thread(&Server::ListenForConnections, this);
 }
 
@@ -135,6 +139,18 @@ void Server::RemoveObserver(Observer* thepObserver)
     {
         mObservers.erase(iterator);
     }
+}
+
+bool Server::ConnectToDatabase(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword, std::string theDatabaseName)
+{
+   bool databaseConnection = false;
+   databaseConnection = mpDatabase->Connect(theHost, thePortNumber, theUser, thePassword, theDatabaseName);
+   return databaseConnection;
+}
+
+bool Server::IsStarted()
+{
+   return mIsStarted;
 }
 
 //*********************************************************************************************************************
@@ -345,6 +361,48 @@ void Server::HandleClient(SOCKET theClientSocket)
 
          // Echo message back to client.
          BroadcastSend(buffer, bytesRecieved);
+      }
+      else if(string == "connection")
+      {
+         // Wait to receive the actual message.
+         ZeroMemory(buffer, 8192);
+         bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
+
+         std::string message = buffer;
+         std::vector<std::string> tokens;
+         std::stringstream ss(message);
+         while( ss.good() )
+         {
+            std::string substr;
+            std::getline(ss, substr, ',' );
+            tokens.push_back( substr );
+         }
+
+         // TODO: Query database
+         bool userExist = mpDatabase->CheckUserLogin(tokens[0], tokens[1]);
+         
+         if (userExist == true)
+         {
+            // Successful connection.
+            ZeroMemory(buffer, 8192);
+            std::string message = "ACK";
+            for (int i = 0; i < message.length(); ++i)
+            {
+               buffer[i] = message[i];
+            }
+            send(theClientSocket, buffer, 8192, 0);
+         }
+         else
+         {
+            // Unsuccessful connection.
+            ZeroMemory(buffer, 8192);
+            std::string message = "NACK";
+            for (int i = 0; i < message.length(); ++i)
+            {
+               buffer[i] = message[i];
+            }
+            send(theClientSocket, buffer, 8192, 0);
+         }
       }
    }
 

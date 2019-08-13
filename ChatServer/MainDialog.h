@@ -216,9 +216,6 @@ class MainDialog : public CDialogEx, Observer
    private:
 
       // TODO: Add description.
-      Database* mpDatabase;
-
-      // TODO: Add description.
       Server* mpServer;
 
       // TODO: Add description.

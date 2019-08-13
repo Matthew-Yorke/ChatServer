@@ -104,3 +104,29 @@ bool Database::Connect(std::string theHost, int thePortNumber, std::string theUs
 
    return true;
 }
+
+bool Database::CheckUserLogin(std::string theUsername, std::string thePassword)
+{
+   mysqlx::RowResult myRows;
+   //std::vector<mysqlx::Schema> myScehma = mpSession->getSchemas();
+   //for(auto a = myScehma.begin(); a != myScehma.end(); ++a)
+   //{
+   //   std::vector<mysqlx::Table> table = a->getTables();
+   //}
+   mysqlx::Schema mySchema = mpSession->getSchema(L"chatdatabase");
+   mysqlx::Table usersTable = mySchema.getTable(L"users");
+   myRows = usersTable.select("handle", "password")
+                      .where("handle like :handle AND password like :password")
+                      .bind("handle", theUsername)
+                      .bind("password", thePassword)
+                      .execute();
+
+   if (myRows.begin() == myRows.end())
+   {
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}

@@ -38,7 +38,6 @@
 MainDialog::MainDialog(CWnd* thepParent /*=nullptr*/)
 	: CDialogEx(IDD_CHATSERVER_DIALOG, thepParent)
 {
-   mpDatabase = new Database();
    mpServer = new Server();
    mpServer->RegisterObserver(this);
 	mHIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -60,8 +59,6 @@ MainDialog::MainDialog(CWnd* thepParent /*=nullptr*/)
 //***************************************************************************************************************
 MainDialog::~MainDialog()
 {
-   delete mpDatabase;
-   mpDatabase = nullptr;
    delete mpServer;
    mpServer = nullptr;
 }
@@ -268,18 +265,20 @@ void MainDialog::OnStartButton()
       std::string password = CStringA(mDatabasePassword);
       std::string databaseName = CStringA(mDatabaseName);
 
-      databaseConnection = mpDatabase->Connect(host, mPortNumber, user, password, databaseName);
-
-      if (databaseConnection == false)
-      {
-         AfxMessageBox(_T("Failed to connect to the database."), MB_OK | MB_ICONERROR);
-      }
-      else
-      {
-         AfxMessageBox(_T("Successfully connected to the database."), MB_OK | MB_ICONINFORMATION);
-      }
-
       mpServer->StartServer();
+      if(mpServer->IsStarted())
+      {
+         databaseConnection = mpServer->ConnectToDatabase(host, mPortNumber, user, password, databaseName);
+
+         if (databaseConnection == false)
+         {
+            AfxMessageBox(_T("Failed to connect to the database."), MB_OK | MB_ICONERROR);
+         }
+         else
+         {
+            AfxMessageBox(_T("Successfully connected to the database."), MB_OK | MB_ICONINFORMATION);
+         }
+      }
    }
 }
 

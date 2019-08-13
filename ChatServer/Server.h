@@ -119,6 +119,10 @@ class Server : Subject
       //***************************************************************************************************************
       void RemoveObserver(Observer* thepObserver) override;
 
+      bool ConnectToDatabase(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword, std::string theDatabaseName);
+
+      bool IsStarted();
+
    protected:
 
       // There are currently no protected methods.
@@ -284,6 +288,12 @@ class Server : Subject
 
       // Object to hold server message information to pass to all observers.
       Information* mpServerInformation;
+
+      // TODO: Add description.
+      Database* mpDatabase;
+
+      // TODO: Add description.
+      bool mIsStarted;
 
 //*********************************************************************************************************************
 // End - Member Variables

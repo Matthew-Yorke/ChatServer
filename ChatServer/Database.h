@@ -79,6 +79,8 @@ class Database
       bool Connect(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword,
                    std::string theDatabase);
 
+      bool CheckUserLogin(std::string theUsername, std::string thePassword);
+
    protected:
 
       // There are currently no protected methods.
