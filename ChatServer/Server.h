@@ -119,8 +119,36 @@ class Server : Subject
       //***************************************************************************************************************
       void RemoveObserver(Observer* thepObserver) override;
 
+      //***************************************************************************************************************
+      //
+      // Method: ConnectToDatabase
+      //
+      // Description:
+      //    Unregister an observer
+      //
+      // Arguments:
+      //    thepObserver - the observer object to be unregistered
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
       bool ConnectToDatabase(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword, std::string theDatabaseName);
 
+      //***************************************************************************************************************
+      //
+      // Method: IsStarted
+      //
+      // Description:
+      //    Unregister an observer
+      //
+      // Arguments:
+      //    thepObserver - the observer object to be unregistered
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
       bool IsStarted();
 
    protected:

@@ -2,11 +2,9 @@
   AboutDialog.cpp
   ChatServer.cpp
   Database.cpp
-c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(93): warning C4101: 'err': unreferenced local variable
-c:\users\yorke\source\repos\chatserver\chatserver\chatserver\database.cpp(100): warning C4101: 'err': unreferenced local variable
   MainDialog.cpp
   Server.cpp
   Generating code
-  All 1588 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 1482 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   ChatServer.vcxproj -> C:\Users\Yorke\source\repos\ChatServer\ChatServer\x64\Release\ChatServer.exe

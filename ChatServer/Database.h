@@ -3,7 +3,9 @@
 // File Name: Database.h
 //
 // Description:
-//    TODO: Add description.
+//    This class handles the connection between the server and the database. Functionality allows for connecting to
+//    different databases dynamically, but under the assumption of the same schema required for the chat database.
+//    This class handles verifying user connection, manipulating users, and logging chat messages.
 //
 // History
 //---------------------------------------------------------------------------------------------------------------------
@@ -30,7 +32,7 @@ class Database
       // Method: Database
       //
       // Description:
-      //    TODO: Add description.
+      //    Standard constructor for the database class that sets member variables to their default values.
       //
       // Arguments:
       //    N/A
@@ -46,7 +48,7 @@ class Database
       // Method: ~Database
       //
       // Description:
-      //    TODO: Add description.
+      //    Destructor for the database class that frees any allocated dynamic memory.
       //
       // Arguments:
       //    N/A
@@ -62,24 +64,40 @@ class Database
       // Method: Connect
       //
       // Description:
-      //    TODO: Add description.
+      //    Attempts to connect to the database using the passed in credentials.
       //
       // Arguments:
-      //    theHost - TODO: Add description.
-      //    thePortNumber - TODO: Add description.
-      //    theUser - TODO: Add description.
-      //    thePassword - TODO: Add description.
-      //    theDatabase - TODO: Add description.
+      //    theHost       - The IP address or hostname used to connect to the  MySQL database.
+      //    thePortNumber - The port number used to connect to the MySQL database.
+      //    theUser       - The username for connecting to the MySQL database.
+      //    thePassword   - The password that accompanies the username for connecting to the MySQL database.
+      //    theDatabase   - The name of the database schema.
       //
       // Return:
-      //    True - TODO: Add description.
-      //    False - TODO: Add description.
+      //    True  - The connection to the database is successful.
+      //    False - The connection to the database is not successful.
       //
       //***************************************************************************************************************
-      bool Connect(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword,
-                   std::string theDatabase);
+      bool Connect(const std::string& theHost, const int& thePortNumber, const std::string& theUser,
+                   const std::string& thePassword, const std::string& theDatabase);
 
-      bool CheckUserLogin(std::string theUsername, std::string thePassword);
+      //***************************************************************************************************************
+      //
+      // Method: CheckUserLogin
+      //
+      // Description:
+      //    Queries the database with the username and password the client sent for logging into the chat.
+      //
+      // Arguments:
+      //    theUsername - The username the client sent for logging in.
+      //    thePassword - The password the client sent for logging in.
+      //
+      // Return:
+      //    True  - The username/password combination exist in the database and the user can log in to the chat server.
+      //    False - The username/password combination does not exist and the user will be denied access to the server.
+      //
+      //***************************************************************************************************************
+      bool CheckUserLogin(const std::string& theUsername, const std::string& thePassword);
 
    protected:
 
@@ -87,7 +105,21 @@ class Database
 
    private:
 
-      // There are currently no private methods.
+      //***************************************************************************************************************
+      //
+      // Method: Terminate
+      //
+      // Description:
+      //    Frees any dynamically allocated member variables.
+      //
+      // Arguments:
+      //    N/A
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void Terminate();
 
 //*********************************************************************************************************************
 // End - Methods
@@ -107,23 +139,11 @@ class Database
 
    private:
 
-      // TODO: Add description.
+      // Pointer to the session of the MySQL database.
       mysqlx::Session* mpSession;
 
-      // TODO: Add description.
-      std::string mHost;
-
-      // TODO: Add description.
-      std::string mUser;
-
-      // TODO: Add description.
-      std::string mPassword;
-
-      // TODO: Add description.
-      std::string mDatabase;
-
-      // TODO: Add description.
-      int mPortNumber;
+      // Pointer to the schema within the MySQL database.
+      mysqlx::Schema* mpSchema;
 
 //*********************************************************************************************************************
 // End - Member Variables
