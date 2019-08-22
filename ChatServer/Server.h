@@ -73,22 +73,6 @@ class Server : Subject
 
       //***************************************************************************************************************
       //
-      // Method: StartServer
-      //
-      // Description:
-      //    TODO: Add description.
-      //
-      // Arguments:
-      //    N/A
-      //
-      // Return:
-      //    N/A
-      //
-      //***************************************************************************************************************
-      void StartServer();
-
-      //***************************************************************************************************************
-      //
       // Method: RegisterObserver
       //
       // Description:
@@ -101,7 +85,7 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      void RegisterObserver(Observer* thepObserver) override;
+      void RegisterObserver(Observer* const thepObserver) override;
 
       //***************************************************************************************************************
       //
@@ -111,13 +95,45 @@ class Server : Subject
       //    Unregister an observer
       //
       // Arguments:
-      //    thepObserver - the observer object to be unregistered
+      //    thepObserver - the observer object to be unregistered.
       //
       // Return:
       //    N/A
       //
       //***************************************************************************************************************
-      void RemoveObserver(Observer* thepObserver) override;
+      void RemoveObserver(Observer* const thepObserver) override;
+
+      //***************************************************************************************************************
+      //
+      // Method: StartServer
+      //
+      // Description:
+      //    TODO: Add description.
+      //
+      // Arguments:
+      //    N/A
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      bool StartServer();
+
+      //***************************************************************************************************************
+      //
+      // Method: TerminateServer
+      //
+      // Description:
+      //    TODO: Add description.
+      //
+      // Arguments:
+      //    N/A
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void TerminateServer();
 
       //***************************************************************************************************************
       //
@@ -133,29 +149,30 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      bool ConnectToDatabase(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword, std::string theDatabaseName);
-
-      //***************************************************************************************************************
-      //
-      // Method: IsStarted
-      //
-      // Description:
-      //    Unregister an observer
-      //
-      // Arguments:
-      //    thepObserver - the observer object to be unregistered
-      //
-      // Return:
-      //    N/A
-      //
-      //***************************************************************************************************************
-      bool IsStarted();
+      bool ConnectToDatabase(const std::string theHost, const int thePortNumber, const std::string theUser,
+                             const std::string thePassword, const std::string theDatabaseName);
 
    protected:
 
       // There are currently no protected methods.
 
    private:
+
+      //***************************************************************************************************************
+      //
+      // Method: NotifyObservers
+      //
+      // Description:
+      //    Notify all the registered observers when a change happens
+      //
+      // Arguments:
+      //    thepServerInformation - 
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void NotifyObservers(Information* const thepServerInformation) override;
 
       //***************************************************************************************************************
       //
@@ -205,7 +222,7 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      void BindListenerSocket();
+      bool BindListenerSocket();
 
       //***************************************************************************************************************
       //
@@ -239,7 +256,6 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      
       void HandleClient(SOCKET theClientSocket);
 
       //***************************************************************************************************************
@@ -251,8 +267,6 @@ class Server : Subject
       //     clients.
       //
       // Arguments:
-      //    theSendingClient  - The socket of the client that sent the message to be broadcasted so it can be ignored
-      //                        for broadcasting.
       //    theBuffer         - The buffer containing the message to be broadcasted back to the clients.
       //    theBystesRecieved - The number of bytes received to be sent back out.
       //
@@ -261,22 +275,6 @@ class Server : Subject
       //
       //***************************************************************************************************************
       void BroadcastSend(char* theBuffer, int theBystesRecieved);
-
-      //***************************************************************************************************************
-      //
-      // Method: NotifyObservers
-      //
-      // Description:
-      //    Notify all the registered observers when a change happens
-      //
-      // Arguments:
-      //    thepParent - TODO: Add description.
-      //
-      // Return:
-      //    N/A
-      //
-      //***************************************************************************************************************
-      void NotifyObservers() override;
 
 //*********************************************************************************************************************
 // End - Methods
@@ -314,14 +312,11 @@ class Server : Subject
       // List of objects observing this class.
       std::vector<Observer*> mObservers;
 
-      // Object to hold server message information to pass to all observers.
-      Information* mpServerInformation;
-
       // TODO: Add description.
       Database* mpDatabase;
 
-      // TODO: Add description.
-      bool mIsStarted;
+      // Boolean to track if the listener socket is active (true) or not (false).
+      bool mListernerSocketActive;
 
 //*********************************************************************************************************************
 // End - Member Variables

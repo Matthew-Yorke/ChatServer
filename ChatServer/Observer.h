@@ -3,7 +3,8 @@
 // File Name: Observer.h
 //
 // Description:
-//    TODO: Add description.
+//    The observer interface for the observer pattern used to create the abstract method to notify classes that the
+//    subject they are observing is notifying changes.
 //
 // History
 //---------------------------------------------------------------------------------------------------------------------
@@ -14,6 +15,15 @@
 #ifndef Observer_H
 #define Observer_H
 
+//*********************************************************************************************************************
+//
+// Structure: Information
+//
+// Description:
+//    The information structure of what information is contained for when the server has updated with a new message
+//    from the client. The client will send what type of message, who sent the message, and what the message is.
+//
+//*********************************************************************************************************************
 struct Information
 {
    enum MessageType {Connection, Disconnect, Message};
@@ -35,7 +45,7 @@ class Observer {
    // Method: Notify
    //
    // Description:
-   //    TODO: Add a description
+   //    Sets the notify pure virtual method so any class that inherits this class must define the functionality.
    //
    // Arguments:
    //    thepServerInformation - TODO: Add description.

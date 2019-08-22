@@ -265,13 +265,15 @@ void MainDialog::OnStartButton()
       std::string password = CStringA(mDatabasePassword);
       std::string databaseName = CStringA(mDatabaseName);
 
-      mpServer->StartServer();
-      if(mpServer->IsStarted())
+      bool startServerSuccess = false;
+      startServerSuccess = mpServer->StartServer();
+      if(startServerSuccess == true)
       {
          databaseConnection = mpServer->ConnectToDatabase(host, mPortNumber, user, password, databaseName);
 
          if (databaseConnection == false)
          {
+            mpServer->TerminateServer();
             AfxMessageBox(_T("Failed to connect to the database."), MB_OK | MB_ICONERROR);
          }
          else

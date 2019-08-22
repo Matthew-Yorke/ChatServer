@@ -21,6 +21,10 @@
 #include <iostream>
 
 //*********************************************************************************************************************
+// Start - Public Methods
+//*********************************************************************************************************************
+
+//*********************************************************************************************************************
 //
 // Method: Server
 //
@@ -37,9 +41,8 @@
 //*********************************************************************************************************************
 Server::Server()
 {
-   mpServerInformation = new Information();
    mpDatabase = new Database();
-   mIsStarted = false;
+   mListernerSocketActive = false;
 }
 
 //*********************************************************************************************************************
@@ -48,7 +51,7 @@ Server::Server()
 //
 // Description:
 //    Destructor of the Server object that will join all threads and then close the listener socket, finally cleaning
-//    up windows sockets.
+//    up windows sockets. Additionally, at the end any allocated memory is freed.
 //
 // Arguments:
 //    N/A
@@ -59,23 +62,66 @@ Server::Server()
 //*********************************************************************************************************************
 Server::~Server()
 {
-   mListenThread->join();
-   delete mListenThread;
+   TerminateServer();
 
    for(auto iter = mClientThreads.begin(); iter != mClientThreads.end(); ++iter)
    {
-      (*iter)->join();
+      if ((*iter)->joinable() == true)
+      {
+         (*iter)->join();
+      }
    }
 
-   closesocket(mListeningSocket);
-
-   WSACleanup();
-
-   delete mpServerInformation;
    delete mpDatabase;
 }
 
-//***************************************************************************************************************
+//*********************************************************************************************************************
+//
+// Method: RegisterObserver
+//
+// Description:
+//    Register an observer by adding it to the vector of registered observers.
+//
+// Arguments:
+//    thepObserver - Pointer to the observer object that is registering for information.
+//
+// Return:
+//    N/A
+//
+//*********************************************************************************************************************
+void Server::RegisterObserver(Observer* const thepObserver)
+{
+   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
+   if (iterator == mObservers.end())
+   {
+       mObservers.push_back(thepObserver);
+   }
+}
+
+//*********************************************************************************************************************
+//
+// Method: RemoveObserver
+//
+// Description:
+//    Unregister an observer by removing it from the vector of registered observers.
+//
+// Arguments:
+//    thepObserver - Pointer to the observer object that is unregistering.
+//
+// Return:
+//    N/A
+//
+//*********************************************************************************************************************
+void Server::RemoveObserver(Observer* const thepObserver)
+{
+   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
+   if (iterator != mObservers.end())
+   {
+       mObservers.erase(iterator);
+   }
+}
+
+//*********************************************************************************************************************
 //
 // Method: StartServer
 //
@@ -88,69 +134,113 @@ Server::~Server()
 // Return:
 //    N/A
 //
-//***************************************************************************************************************
-void Server::StartServer()
+//*********************************************************************************************************************
+bool Server::StartServer()
 {
-   InitializeWindowsSocket();
-   CreateListenerSocket();
-   BindListenerSocket();
-   mIsStarted = true;
+   // Set up a listener socket and on any failure clean up sockets then return false.
+   if (InitializeWindowsSocket() == false ||
+       CreateListenerSocket() == false ||
+       BindListenerSocket() == false)
+   {
+      TerminateServer();
+      return false;
+   }
+
+   // Start a thread for listening for socket connections.
    mListenThread = new std::thread(&Server::ListenForConnections, this);
+
+   // No failures happened, return true.
+   return true;
 }
 
-//***************************************************************************************************************
+//*********************************************************************************************************************
 //
-// Method: RegisterObserver
+// Method: TerminateServer
 //
 // Description:
-//    Register an observer
+//    TODO: Add description.
 //
 // Arguments:
-//    thepObserver - the observer object to be registered.
+//    N/A
 //
 // Return:
 //    N/A
 //
-//***************************************************************************************************************
-void Server::RegisterObserver(Observer* thepObserver)
+//*********************************************************************************************************************
+void Server::TerminateServer()
 {
-   mObservers.push_back(thepObserver);
+   mListernerSocketActive = false;
+   closesocket(mListeningSocket);
+   if (mListenThread != nullptr &&
+       mListenThread->joinable() == true)
+   {
+      mListenThread->join();
+   }
+   delete mListenThread;
+   mListenThread = nullptr;
+
+   WSACleanup();
 }
 
-//***************************************************************************************************************
+//*********************************************************************************************************************
 //
-// Method: RemoveObserver
+// Method: ConnectToDatabase
 //
 // Description:
-//    Unregister an observer
+//    Attempts to connect to the database using the passed in credentials.
 //
 // Arguments:
 //    thepObserver - the observer object to be unregistered
 //
 // Return:
+//    True  - The connection to the database is successful.
+//    False - The connection to the database has failed.
+//
+//*********************************************************************************************************************
+bool Server::ConnectToDatabase(const std::string theHost, const int thePortNumber, const std::string theUser,
+                               const std::string thePassword, const std::string theDatabaseName)
+{
+   return mpDatabase->Connect(theHost, thePortNumber, theUser, thePassword, theDatabaseName);;
+}
+
+//*********************************************************************************************************************
+// End - Public Methods
+//*********************************************************************************************************************
+
+//*********************************************************************************************************************
+// Start - Protected Methods
+//*********************************************************************************************************************
+
+// There are currently no protected methods.
+
+//*********************************************************************************************************************
+// End - Protected Methods
+//*********************************************************************************************************************
+
+//*********************************************************************************************************************
+// Start - Private Methods
+//*********************************************************************************************************************
+
+//***************************************************************************************************************
+//
+// Method: NotifyObservers
+//
+// Description:
+//    Notify all the registered observers when a change happens
+//
+// Arguments:
+//    thepServerInformation - 
+//
+// Return:
 //    N/A
 //
 //***************************************************************************************************************
-void Server::RemoveObserver(Observer* thepObserver)
+void Server::NotifyObservers(Information* const thepServerInformation)
 {
-   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
-
-    if (iterator != mObservers.end())
-    {
-        mObservers.erase(iterator);
+   for (Observer* pObserver : mObservers)
+   {
+        pObserver->Notify(thepServerInformation);
     }
-}
-
-bool Server::ConnectToDatabase(std::string theHost, int thePortNumber, std::string theUser, std::string thePassword, std::string theDatabaseName)
-{
-   bool databaseConnection = false;
-   databaseConnection = mpDatabase->Connect(theHost, thePortNumber, theUser, thePassword, theDatabaseName);
-   return databaseConnection;
-}
-
-bool Server::IsStarted()
-{
-   return mIsStarted;
 }
 
 //*********************************************************************************************************************
@@ -173,9 +263,7 @@ bool Server::InitializeWindowsSocket()
    WSADATA wsData;
    WORD version = MAKEWORD(2, 2);
 
-   int winSocketOk = WSAStartup(version, &wsData);
-
-   if (winSocketOk != 0)
+   if (WSAStartup(version, &wsData) != 0)
    {
       AfxMessageBox(_T("Failed to initialize the listener socket."), MB_OK | MB_ICONERROR);
       return false;
@@ -225,16 +313,24 @@ bool Server::CreateListenerSocket()
 //    N/A
 //
 //*********************************************************************************************************************
-void Server::BindListenerSocket()
+bool Server::BindListenerSocket()
 {
    sockaddr_in hint;
    hint.sin_family = AF_INET;
    hint.sin_port = htons(54000);
    hint.sin_addr.S_un.S_addr = INADDR_ANY;
 
-   bind(mListeningSocket, reinterpret_cast<sockaddr*>(&hint), sizeof(hint));
+   if (bind(mListeningSocket, reinterpret_cast<sockaddr*>(&hint), sizeof(hint)) == SOCKET_ERROR)
+   {
+      return false;
+   }
 
-   listen(mListeningSocket, SOMAXCONN);
+   if (listen(mListeningSocket, SOMAXCONN) == SOCKET_ERROR)
+   {
+      return false;
+   }
+
+   return true;
 }
 
 //*********************************************************************************************************************
@@ -254,15 +350,20 @@ void Server::BindListenerSocket()
 //*********************************************************************************************************************
 void Server::ListenForConnections()
 {
+   mListernerSocketActive = true;
    sockaddr_in client;
    int clientSize = sizeof(client);
-   for(;;)
+
+   do
    {
+      // Listen for a socket connection.
       SOCKET clientSocket = accept(mListeningSocket, reinterpret_cast<sockaddr*>(&client), &clientSize);
+      // Invalid socket tried to connect.
       if (clientSocket == INVALID_SOCKET)
       {
          std::cerr << "Client socket is invalid." << std::endl;
       }
+      // Valid socket connected.
       else
       {
          char host[NI_MAXHOST];      // Client's remote name.
@@ -281,16 +382,24 @@ void Server::ListenForConnections()
             std::cout << host << " connected on port: " << ntohs(client.sin_port) << std::endl;
          }
 
+         // Add the connection to the vector of connected clients.
          mMutex.lock();
          mConnectedClients.push_back(clientSocket);
-         mpServerInformation->type = Information::Connection;
-         mpServerInformation->message = "";
-         mpServerInformation->user = host;
-         NotifyObservers();
          mMutex.unlock();
+
+         // Send a message to observers that the client has connected
+         Information* pConnectionInformation = new Information();
+         pConnectionInformation->type = Information::Connection;
+         pConnectionInformation->message = "";
+         pConnectionInformation->user = host;
+         mMutex.lock();
+         NotifyObservers(pConnectionInformation);
+         mMutex.unlock();
+         delete pConnectionInformation;
+         
          mClientThreads.emplace_back(new std::thread(&Server::HandleClient, this, clientSocket));
       }
-   }
+   } while (mListernerSocketActive == true);
 }
 
 //*********************************************************************************************************************
@@ -352,12 +461,15 @@ void Server::HandleClient(SOCKET theClientSocket)
          ZeroMemory(buffer, 8192);
          bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
 
-         // Send information to observers.
+         // Send message information to observers.
+         Information* pConnectionInformation = new Information();
+         pConnectionInformation->type = Information::Message;
+         pConnectionInformation->message = buffer;
+         pConnectionInformation->user = "";
          mMutex.lock();
-         mpServerInformation->type = Information::Message;
-         mpServerInformation->message = buffer;
-         NotifyObservers();
+         NotifyObservers(pConnectionInformation);
          mMutex.unlock();
+         delete pConnectionInformation;
 
          // Echo message back to client.
          BroadcastSend(buffer, bytesRecieved);
@@ -381,10 +493,10 @@ void Server::HandleClient(SOCKET theClientSocket)
          // TODO: Query database
          bool userExist = mpDatabase->CheckUserLogin(tokens[0], tokens[1]);
          
+         ZeroMemory(buffer, 8192);
+         // Successful connection.
          if (userExist == true)
          {
-            // Successful connection.
-            ZeroMemory(buffer, 8192);
             std::string message = "ACK";
             for (int i = 0; i < message.length(); ++i)
             {
@@ -392,10 +504,9 @@ void Server::HandleClient(SOCKET theClientSocket)
             }
             send(theClientSocket, buffer, 8192, 0);
          }
+         // Unsuccessful connection.
          else
          {
-            // Unsuccessful connection.
-            ZeroMemory(buffer, 8192);
             std::string message = "NACK";
             for (int i = 0; i < message.length(); ++i)
             {
@@ -436,24 +547,6 @@ void Server::BroadcastSend(char* theBuffer, int theBystesRecieved)
    mMutex.unlock();
 }
 
-//***************************************************************************************************************
-//
-// Method: NotifyObservers
-//
-// Description:
-//    Notify all the registered observers when a change happens
-//
-// Arguments:
-//    thepParent - TODO: Add description.
-//
-// Return:
-//    N/A
-//
-//***************************************************************************************************************
-void Server::NotifyObservers()
-{
-   for (Observer* observer : mObservers)
-   {
-        observer->Notify(mpServerInformation);
-    }
-}
+//*********************************************************************************************************************
+// End - Private Methods
+//*********************************************************************************************************************

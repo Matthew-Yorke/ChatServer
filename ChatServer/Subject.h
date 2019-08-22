@@ -3,7 +3,8 @@
 // File Name: Subject.h
 //
 // Description:
-//    TODO: Add description.
+//    The subject interface of the observer pattern that sets the methods needed to be implemented by the child class
+//    to register, unregister, and notify observers.
 //
 // History
 //---------------------------------------------------------------------------------------------------------------------
@@ -26,51 +27,51 @@ class Subject {
 
       //***************************************************************************************************************
       //
-      // Method: registerObserver
+      // Method: RegisterObserver
       //
       // Description:
-      //    Register an observer
+      //    Register an observer.
       //
       // Arguments:
-      //    thepObserver - the observer object to be registered.
+      //    thepObserver - Pointer to an Observer object that is being registered.
       //
       // Return:
       //    N/A
       //
       //***************************************************************************************************************
-      virtual void RegisterObserver(Observer* thepObserver) = 0;
+      virtual void RegisterObserver(Observer* const thepObserver) = 0;
 
       //***************************************************************************************************************
       //
-      // Method: removeObserver
+      // Method: RemoveObserver
       //
       // Description:
-      //    Unregister an observer
+      //    Unregister an observer.
       //
       // Arguments:
-      //    thepObserver - the observer object to be unregistered
+      //    thepObserver - Pointer of the Observer object that is no longer observing changes.
       //
       // Return:
       //    N/A
       //
       //***************************************************************************************************************
-      virtual void RemoveObserver(Observer* thepObserver) = 0;
+      virtual void RemoveObserver(Observer* const thepObserver) = 0;
 
       //***************************************************************************************************************
       //
-      // Method: notifyObservers
+      // Method: NotifyObservers
       //
       // Description:
       //    Notify all the registered observers when a change happens
       //
       // Arguments:
-      //    thepParent - TODO: Add description.
+      //    thepServerInformation - Pointer to the information the client sent.
       //
       // Return:
       //    N/A
       //
       //***************************************************************************************************************
-      virtual void NotifyObservers() = 0;
+      virtual void NotifyObservers(Information* const thepServerInformation) = 0;
 
    protected:
 
