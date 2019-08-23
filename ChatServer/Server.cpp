@@ -18,6 +18,8 @@
 
 #include "stdafx.h"
 #include "Server.h"
+#include "ServerConstants.h"
+#include "MessageConstants.h"
 #include <iostream>
 
 //*********************************************************************************************************************
@@ -64,7 +66,9 @@ Server::~Server()
 {
    TerminateServer();
 
-   for(auto iter = mClientThreads.begin(); iter != mClientThreads.end(); ++iter)
+   for(auto iter = mClientThreads.begin();
+       iter != mClientThreads.end();
+       ++iter)
    {
       if ((*iter)->joinable() == true)
       {
@@ -91,7 +95,9 @@ Server::~Server()
 //*********************************************************************************************************************
 void Server::RegisterObserver(Observer* const thepObserver)
 {
-   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
+   auto iterator = std::find(mObservers.begin(), 
+                             mObservers.end(),
+                             thepObserver);
    if (iterator == mObservers.end())
    {
        mObservers.push_back(thepObserver);
@@ -114,7 +120,9 @@ void Server::RegisterObserver(Observer* const thepObserver)
 //*********************************************************************************************************************
 void Server::RemoveObserver(Observer* const thepObserver)
 {
-   auto iterator = std::find(mObservers.begin(), mObservers.end(), thepObserver);
+   auto iterator = std::find(mObservers.begin(),
+                             mObservers.end(),
+                             thepObserver);
    if (iterator != mObservers.end())
    {
        mObservers.erase(iterator);
@@ -147,7 +155,8 @@ bool Server::StartServer()
    }
 
    // Start a thread for listening for socket connections.
-   mListenThread = new std::thread(&Server::ListenForConnections, this);
+   mListenThread = new std::thread(&Server::ListenForConnections,
+                                   this);
 
    // No failures happened, return true.
    return true;
@@ -171,6 +180,7 @@ void Server::TerminateServer()
 {
    mListernerSocketActive = false;
    closesocket(mListeningSocket);
+
    if (mListenThread != nullptr &&
        mListenThread->joinable() == true)
    {
@@ -200,7 +210,11 @@ void Server::TerminateServer()
 bool Server::ConnectToDatabase(const std::string theHost, const int thePortNumber, const std::string theUser,
                                const std::string thePassword, const std::string theDatabaseName)
 {
-   return mpDatabase->Connect(theHost, thePortNumber, theUser, thePassword, theDatabaseName);;
+   return mpDatabase->Connect(theHost,
+                              thePortNumber,
+                              theUser,
+                              thePassword,
+                              theDatabaseName);;
 }
 
 //*********************************************************************************************************************
@@ -226,7 +240,7 @@ bool Server::ConnectToDatabase(const std::string theHost, const int thePortNumbe
 // Method: NotifyObservers
 //
 // Description:
-//    Notify all the registered observers when a change happens
+//    Notify all the registered observers about when a change happens.
 //
 // Arguments:
 //    thepServerInformation - 
@@ -263,9 +277,10 @@ bool Server::InitializeWindowsSocket()
    WSADATA wsData;
    WORD version = MAKEWORD(2, 2);
 
-   if (WSAStartup(version, &wsData) != 0)
+   if (WSAStartup(version, &wsData) != ServerConstants::WSA_STARTUP_SUCCESS)
    {
-      AfxMessageBox(_T("Failed to initialize the listener socket."), MB_OK | MB_ICONERROR);
+      AfxMessageBox(GuiMessageConstants::INITIALIZE_LISTEN_SOCKET_ERROR,
+                    MB_OK | MB_ICONERROR);
       return false;
    }
 
@@ -289,10 +304,13 @@ bool Server::InitializeWindowsSocket()
 //*********************************************************************************************************************
 bool Server::CreateListenerSocket()
 {
-   mListeningSocket = socket(AF_INET, SOCK_STREAM, 0);
+   mListeningSocket = socket(AF_INET,
+                             SOCK_STREAM,
+                             IPPROTO_TCP);
    if (mListeningSocket == INVALID_SOCKET)
    {
-      AfxMessageBox(_T("Failed to create the socket."), MB_OK | MB_ICONERROR);
+      AfxMessageBox(GuiMessageConstants::CREATE_SOCKET_ERROR,
+                    MB_OK | MB_ICONERROR);
       return false;
    }
 
@@ -317,15 +335,18 @@ bool Server::BindListenerSocket()
 {
    sockaddr_in hint;
    hint.sin_family = AF_INET;
-   hint.sin_port = htons(54000);
+   hint.sin_port = htons(ServerConstants::SERVER_PORT_NUMBER);
    hint.sin_addr.S_un.S_addr = INADDR_ANY;
 
-   if (bind(mListeningSocket, reinterpret_cast<sockaddr*>(&hint), sizeof(hint)) == SOCKET_ERROR)
+   if (bind(mListeningSocket,
+            reinterpret_cast<sockaddr*>(&hint),
+            sizeof(hint)) == SOCKET_ERROR)
    {
       return false;
    }
 
-   if (listen(mListeningSocket, SOMAXCONN) == SOCKET_ERROR)
+   if (listen(mListeningSocket,
+              SOMAXCONN) == SOCKET_ERROR)
    {
       return false;
    }
@@ -357,28 +378,36 @@ void Server::ListenForConnections()
    do
    {
       // Listen for a socket connection.
-      SOCKET clientSocket = accept(mListeningSocket, reinterpret_cast<sockaddr*>(&client), &clientSize);
-      // Invalid socket tried to connect.
-      if (clientSocket == INVALID_SOCKET)
-      {
-         std::cerr << "Client socket is invalid." << std::endl;
-      }
+      SOCKET clientSocket = accept(mListeningSocket,
+                                   reinterpret_cast<sockaddr*>(&client),
+                                   &clientSize);
       // Valid socket connected.
-      else
+      if (clientSocket != INVALID_SOCKET)
       {
          char host[NI_MAXHOST];      // Client's remote name.
          char service[NI_MAXHOST];   // Service (i.e. port) client is connected on.
 
-         ZeroMemory(host, NI_MAXHOST);
-         ZeroMemory(service, NI_MAXHOST);
+         ZeroMemory(host,
+                    NI_MAXHOST);
+         ZeroMemory(service,
+                    NI_MAXHOST);
 
-         if (getnameinfo(reinterpret_cast<sockaddr*>(&client), sizeof(client), host, NI_MAXHOST, service, NI_MAXHOST, 0) == 0)
+         if (getnameinfo(reinterpret_cast<sockaddr*>(&client),
+                         sizeof(client),
+                         host,
+                         NI_MAXHOST,
+                         service,
+                         NI_MAXHOST,
+                         0) == 0)
          {
             std::cout << host << " connected on port: " << service << std::endl;
          }
          else
          {
-            inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
+            inet_ntop(AF_INET,
+                      &client.sin_addr,
+                      host,
+                      NI_MAXHOST);
             std::cout << host << " connected on port: " << ntohs(client.sin_port) << std::endl;
          }
 
@@ -390,14 +419,16 @@ void Server::ListenForConnections()
          // Send a message to observers that the client has connected
          Information* pConnectionInformation = new Information();
          pConnectionInformation->type = Information::Connection;
-         pConnectionInformation->message = "";
+         pConnectionInformation->message = ServerConstants::BLANK_MESSAGE;
          pConnectionInformation->user = host;
          mMutex.lock();
          NotifyObservers(pConnectionInformation);
          mMutex.unlock();
          delete pConnectionInformation;
          
-         mClientThreads.emplace_back(new std::thread(&Server::HandleClient, this, clientSocket));
+         mClientThreads.emplace_back(new std::thread(&Server::HandleClient,
+                                                     this,
+                                                     clientSocket));
       }
    } while (mListernerSocketActive == true);
 }
@@ -416,29 +447,32 @@ void Server::ListenForConnections()
 //    N/A
 //
 //*********************************************************************************************************************
-void Server::HandleClient(SOCKET theClientSocket)
+void Server::HandleClient(const SOCKET theClientSocket)
 {
-   char buffer[8192];
+   char buffer[ServerConstants::MESSAGE_BUFFER_SIZE];
    std::string string;
    int bytesRecieved;
 
    while (true)
    {
-      ZeroMemory(buffer, 8192);
+      ZeroMemory(buffer,
+                 ServerConstants::MESSAGE_BUFFER_SIZE);
 
       // Wait for client to send data.
-      bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
+      bytesRecieved = recv(theClientSocket,
+                           buffer,
+                           ServerConstants::MESSAGE_BUFFER_SIZE,
+                           MSG_WAITALL);
       if (bytesRecieved == SOCKET_ERROR)
       {
-         std::cerr << "Error in receiving. Quitting." << std::endl;
          break;
       }
-
+      // Will happen if a client disconnects.
       if (bytesRecieved == 0)
       {
-         std::cout << "Client disconnected." << std::endl;
          mMutex.lock();
-         for(auto iter = mConnectedClients.begin(); iter != mConnectedClients.end();)
+         for(auto iter = mConnectedClients.begin();
+             iter != mConnectedClients.end();)
          {
             if(*iter == theClientSocket)
             {
@@ -455,30 +489,39 @@ void Server::HandleClient(SOCKET theClientSocket)
 
       string = buffer;
 
-      if(string == "message")
+      if(string.compare(ServerConstants::MESSAGE_TYPE_MESSAGE) == ServerConstants::STRINGS_ARE_EQUAL)
       {
          // Wait to receive the actual message.
-         ZeroMemory(buffer, 8192);
-         bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
+         ZeroMemory(buffer,
+                    ServerConstants::MESSAGE_BUFFER_SIZE);
+         bytesRecieved = recv(theClientSocket,
+                              buffer,
+                              ServerConstants::MESSAGE_BUFFER_SIZE,
+                              MSG_WAITALL);
 
          // Send message information to observers.
          Information* pConnectionInformation = new Information();
          pConnectionInformation->type = Information::Message;
          pConnectionInformation->message = buffer;
-         pConnectionInformation->user = "";
+         pConnectionInformation->user = ServerConstants::BLANK_MESSAGE;
          mMutex.lock();
          NotifyObservers(pConnectionInformation);
          mMutex.unlock();
          delete pConnectionInformation;
 
          // Echo message back to client.
-         BroadcastSend(buffer, bytesRecieved);
+         BroadcastSend(buffer,
+                       bytesRecieved);
       }
-      else if(string == "connection")
+      else if(string.compare(ServerConstants::MESSAGE_TYPE_CONNECTION) == ServerConstants::STRINGS_ARE_EQUAL)
       {
          // Wait to receive the actual message.
-         ZeroMemory(buffer, 8192);
-         bytesRecieved = recv(theClientSocket, buffer, 8192, MSG_WAITALL);
+         ZeroMemory(buffer,
+                    ServerConstants::MESSAGE_BUFFER_SIZE);
+         bytesRecieved = recv(theClientSocket,
+                              buffer,
+                              ServerConstants::MESSAGE_BUFFER_SIZE,
+                              MSG_WAITALL);
 
          std::string message = buffer;
          std::vector<std::string> tokens;
@@ -486,33 +529,47 @@ void Server::HandleClient(SOCKET theClientSocket)
          while( ss.good() )
          {
             std::string substr;
-            std::getline(ss, substr, ',' );
+            std::getline(ss,
+                         substr,
+                         ServerConstants::PARSE_DELIMIETER);
             tokens.push_back( substr );
          }
 
          // TODO: Query database
-         bool userExist = mpDatabase->CheckUserLogin(tokens[0], tokens[1]);
+         bool userExist = mpDatabase->CheckUserLogin(tokens[0],
+                                                     tokens[1]);
          
-         ZeroMemory(buffer, 8192);
+         ZeroMemory(buffer,
+                    ServerConstants::MESSAGE_BUFFER_SIZE);
          // Successful connection.
          if (userExist == true)
          {
-            std::string message = "ACK";
-            for (int i = 0; i < message.length(); ++i)
+            std::string message = ServerConstants::ACKNOWLEDGE_CONNECTION;
+            for (int i = 0;
+                 i < message.length();
+                 ++i)
             {
                buffer[i] = message[i];
             }
-            send(theClientSocket, buffer, 8192, 0);
+            send(theClientSocket,
+                 buffer,
+                 ServerConstants::MESSAGE_BUFFER_SIZE,
+                 ServerConstants::SEND_NO_FLAG);
          }
          // Unsuccessful connection.
          else
          {
-            std::string message = "NACK";
-            for (int i = 0; i < message.length(); ++i)
+            std::string message = ServerConstants::UNACKNOWLEDGE_CONNECTION;
+            for (int i = 0;
+                 i < message.length();
+                 ++i)
             {
                buffer[i] = message[i];
             }
-            send(theClientSocket, buffer, 8192, 0);
+            send(theClientSocket,
+                 buffer,
+                 ServerConstants::MESSAGE_BUFFER_SIZE,
+                 ServerConstants::SEND_NO_FLAG);
          }
       }
    }
@@ -537,12 +594,17 @@ void Server::HandleClient(SOCKET theClientSocket)
 //    N/A
 //
 //*********************************************************************************************************************
-void Server::BroadcastSend(char* theBuffer, int theBystesRecieved)
+void Server::BroadcastSend(const char* const theBuffer, const int theBystesRecieved)
 {
    mMutex.lock();
-   for (auto iter = mConnectedClients.begin(); iter != mConnectedClients.end(); ++iter)
+   for (auto iter = mConnectedClients.begin();
+        iter != mConnectedClients.end();
+        ++iter)
    {
-      send(*iter, theBuffer, theBystesRecieved, 0);
+      send(*iter,
+           theBuffer,
+           theBystesRecieved,
+           ServerConstants::SEND_NO_FLAG);
    }
    mMutex.unlock();
 }

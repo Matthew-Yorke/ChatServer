@@ -256,7 +256,7 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      void HandleClient(SOCKET theClientSocket);
+      void HandleClient(const SOCKET theClientSocket);
 
       //***************************************************************************************************************
       //
@@ -274,7 +274,7 @@ class Server : Subject
       //    N/A
       //
       //***************************************************************************************************************
-      void BroadcastSend(char* theBuffer, int theBystesRecieved);
+      void BroadcastSend(const char* const theBuffer, const int theBystesRecieved);
 
 //*********************************************************************************************************************
 // End - Methods
