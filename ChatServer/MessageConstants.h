@@ -18,8 +18,10 @@
 
 namespace GuiMessageConstants
 {
+   // The string to use for the error message when the listen socket fails to initialize.
    const LPCTSTR INITIALIZE_LISTEN_SOCKET_ERROR = L"Failed to initialize the listener socket.";
 
+   // The string to use for the error message when the socket fails to create.
    const LPCTSTR CREATE_SOCKET_ERROR = L"Failed to create the socket.";
 }
 

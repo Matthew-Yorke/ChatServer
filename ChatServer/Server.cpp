@@ -66,9 +66,9 @@ Server::~Server()
 {
    TerminateServer();
 
-   for(auto iter = mClientThreads.begin();
-       iter != mClientThreads.end();
-       ++iter)
+   for (auto iter = mClientThreads.begin();
+        iter != mClientThreads.end();
+        ++iter)
    {
       if ((*iter)->joinable() == true)
       {
@@ -134,13 +134,14 @@ void Server::RemoveObserver(Observer* const thepObserver)
 // Method: StartServer
 //
 // Description:
-//    TODO: Add description.
+//    Attempts to start the server up by creating a listener socket thread to wait for client connections.
 //
 // Arguments:
 //    N/A
 //
 // Return:
-//    N/A
+//    True  - The server successfully started.
+//    False - The server did not successfully start.
 //
 //*********************************************************************************************************************
 bool Server::StartServer()
@@ -167,7 +168,7 @@ bool Server::StartServer()
 // Method: TerminateServer
 //
 // Description:
-//    TODO: Add description.
+//    Terminates the listener thread so the server object can gracefully cleanup memory and shutdown.
 //
 // Arguments:
 //    N/A
@@ -200,7 +201,11 @@ void Server::TerminateServer()
 //    Attempts to connect to the database using the passed in credentials.
 //
 // Arguments:
-//    thepObserver - the observer object to be unregistered
+//    theHost         - The hostname/IP address of the database.
+//    thePortNumber   - The port number of the database.
+//    theUser         - The user to log into the database.
+//    thePassword     - The password for the user to log into the database.
+//    theDatabaseName - The name of the database schema to connect to.
 //
 // Return:
 //    True  - The connection to the database is successful.
@@ -243,7 +248,7 @@ bool Server::ConnectToDatabase(const std::string theHost, const int thePortNumbe
 //    Notify all the registered observers about when a change happens.
 //
 // Arguments:
-//    thepServerInformation - 
+//    thepServerInformation - The information to notify observers.
 //
 // Return:
 //    N/A
@@ -253,8 +258,8 @@ void Server::NotifyObservers(Information* const thepServerInformation)
 {
    for (Observer* pObserver : mObservers)
    {
-        pObserver->Notify(thepServerInformation);
-    }
+       pObserver->Notify(thepServerInformation);
+   }
 }
 
 //*********************************************************************************************************************
@@ -415,16 +420,6 @@ void Server::ListenForConnections()
          mMutex.lock();
          mConnectedClients.push_back(clientSocket);
          mMutex.unlock();
-
-         // Send a message to observers that the client has connected
-         Information* pConnectionInformation = new Information();
-         pConnectionInformation->type = Information::Connection;
-         pConnectionInformation->message = ServerConstants::BLANK_MESSAGE;
-         pConnectionInformation->user = host;
-         mMutex.lock();
-         NotifyObservers(pConnectionInformation);
-         mMutex.unlock();
-         delete pConnectionInformation;
          
          mClientThreads.emplace_back(new std::thread(&Server::HandleClient,
                                                      this,
@@ -450,15 +445,15 @@ void Server::ListenForConnections()
 void Server::HandleClient(const SOCKET theClientSocket)
 {
    char buffer[ServerConstants::MESSAGE_BUFFER_SIZE];
-   std::string string;
-   int bytesRecieved;
+   std::string string = ServerConstants::BLANK_MESSAGE;
+   int bytesRecieved = 0;
 
    while (true)
    {
       ZeroMemory(buffer,
                  ServerConstants::MESSAGE_BUFFER_SIZE);
 
-      // Wait for client to send data.
+      // Wait to receive data from the client.
       bytesRecieved = recv(theClientSocket,
                            buffer,
                            ServerConstants::MESSAGE_BUFFER_SIZE,
@@ -470,11 +465,12 @@ void Server::HandleClient(const SOCKET theClientSocket)
       // Will happen if a client disconnects.
       if (bytesRecieved == 0)
       {
+         // Remove the client from list of connected clients and then break to end the thread.
          mMutex.lock();
-         for(auto iter = mConnectedClients.begin();
-             iter != mConnectedClients.end();)
+         for (auto iter = mConnectedClients.begin();
+              iter != mConnectedClients.end();)
          {
-            if(*iter == theClientSocket)
+            if (*iter == theClientSocket)
             {
                iter = mConnectedClients.erase(iter);
             }
@@ -487,9 +483,11 @@ void Server::HandleClient(const SOCKET theClientSocket)
          break;
       }
 
+      // Convert message char array to string.
       string = buffer;
 
-      if(string.compare(ServerConstants::MESSAGE_TYPE_MESSAGE) == ServerConstants::STRINGS_ARE_EQUAL)
+      // Received a standard message from the client.
+      if (string.compare(ServerConstants::MESSAGE_TYPE_MESSAGE) == ServerConstants::STRINGS_ARE_EQUAL)
       {
          // Wait to receive the actual message.
          ZeroMemory(buffer,
@@ -504,16 +502,14 @@ void Server::HandleClient(const SOCKET theClientSocket)
          pConnectionInformation->type = Information::Message;
          pConnectionInformation->message = buffer;
          pConnectionInformation->user = ServerConstants::BLANK_MESSAGE;
-         mMutex.lock();
-         NotifyObservers(pConnectionInformation);
-         mMutex.unlock();
-         delete pConnectionInformation;
+         SendObserversMessage(pConnectionInformation);
 
          // Echo message back to client.
          BroadcastSend(buffer,
                        bytesRecieved);
       }
-      else if(string.compare(ServerConstants::MESSAGE_TYPE_CONNECTION) == ServerConstants::STRINGS_ARE_EQUAL)
+      // Received a connection request from the client.
+      else if (string.compare(ServerConstants::MESSAGE_TYPE_CONNECTION) == ServerConstants::STRINGS_ARE_EQUAL)
       {
          // Wait to receive the actual message.
          ZeroMemory(buffer,
@@ -526,50 +522,35 @@ void Server::HandleClient(const SOCKET theClientSocket)
          std::string message = buffer;
          std::vector<std::string> tokens;
          std::stringstream ss(message);
-         while( ss.good() )
+         while (ss.good())
          {
             std::string substr;
             std::getline(ss,
                          substr,
                          ServerConstants::PARSE_DELIMIETER);
-            tokens.push_back( substr );
+            tokens.push_back(substr);
          }
 
          // TODO: Query database
          bool userExist = mpDatabase->CheckUserLogin(tokens[0],
                                                      tokens[1]);
          
-         ZeroMemory(buffer,
-                    ServerConstants::MESSAGE_BUFFER_SIZE);
          // Successful connection.
          if (userExist == true)
          {
-            std::string message = ServerConstants::ACKNOWLEDGE_CONNECTION;
-            for (int i = 0;
-                 i < message.length();
-                 ++i)
-            {
-               buffer[i] = message[i];
-            }
-            send(theClientSocket,
-                 buffer,
-                 ServerConstants::MESSAGE_BUFFER_SIZE,
-                 ServerConstants::SEND_NO_FLAG);
+            SendResponseMessage(ServerConstants::ACKNOWLEDGE_CONNECTION, theClientSocket);
+
+            // Send a message to observers that the client has connected
+            Information* pConnectionInformation = new Information();
+            pConnectionInformation->type = Information::Connection;
+            pConnectionInformation->message = ServerConstants::BLANK_MESSAGE;
+            pConnectionInformation->user = tokens[0];
+            SendObserversMessage(pConnectionInformation);
          }
          // Unsuccessful connection.
          else
          {
-            std::string message = ServerConstants::UNACKNOWLEDGE_CONNECTION;
-            for (int i = 0;
-                 i < message.length();
-                 ++i)
-            {
-               buffer[i] = message[i];
-            }
-            send(theClientSocket,
-                 buffer,
-                 ServerConstants::MESSAGE_BUFFER_SIZE,
-                 ServerConstants::SEND_NO_FLAG);
+            SendResponseMessage(ServerConstants::UNACKNOWLEDGE_CONNECTION, theClientSocket);
          }
       }
    }
@@ -585,8 +566,6 @@ void Server::HandleClient(const SOCKET theClientSocket)
 //    Thread function to handle receiving messages and then calling to broadcast the message back out to the clients.
 //
 // Arguments:
-//    theSendingClient  - The socket of the client that sent the message to be broadcasted so it can be ignored for
-//                        broadcasting.
 //    theBuffer         - The buffer containing the message to be broadcasted back to the clients.
 //    theBystesRecieved - The number of bytes received to be sent back out.
 //
@@ -607,6 +586,64 @@ void Server::BroadcastSend(const char* const theBuffer, const int theBystesRecie
            ServerConstants::SEND_NO_FLAG);
    }
    mMutex.unlock();
+}
+
+//*********************************************************************************************************************
+//
+// Method: SendObserversMessage
+//
+// Description:
+//    This method sends the passed in information to all observers and frees up memory.
+//
+// Arguments:
+//    thepMessage - The message to send to observers.
+//
+// Return:
+//    N/A
+//
+//*********************************************************************************************************************
+void Server::SendObserversMessage(Information* const thepMessage)
+{
+   mMutex.lock();
+   NotifyObservers(thepMessage);
+   mMutex.unlock();
+   delete thepMessage;
+}
+
+//*********************************************************************************************************************
+//
+// Method: SendResponseMessage
+//
+// Description:
+//    This methods converts the message into a fixed sized buffer and sends it to the passed in socket.
+//
+// Arguments:
+//    theMessage - The message to be sent.
+//    theSocket  - The connected socket to receive the message.
+//
+// Return:
+//    N/A
+//
+//*********************************************************************************************************************
+void Server::SendResponseMessage(const std::string theMessage, const SOCKET theSocket)
+{
+   char buffer[ServerConstants::MESSAGE_BUFFER_SIZE];
+
+   // TODO: Add code for handling messages larger than the buffer size. A.K.A. Send multiple packets.
+
+   ZeroMemory(buffer,
+              ServerConstants::MESSAGE_BUFFER_SIZE);
+
+   for (int i = 0;
+        i < theMessage.length();
+        ++i)
+   {
+      buffer[i] = theMessage[i];
+   }
+   send(theSocket,
+        buffer,
+        ServerConstants::MESSAGE_BUFFER_SIZE,
+        ServerConstants::SEND_NO_FLAG);
 }
 
 //*********************************************************************************************************************

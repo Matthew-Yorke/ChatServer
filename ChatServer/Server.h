@@ -108,13 +108,14 @@ class Server : Subject
       // Method: StartServer
       //
       // Description:
-      //    TODO: Add description.
+      //    Attempts to start the server up by creating a listener socket thread to wait for client connections.
       //
       // Arguments:
       //    N/A
       //
       // Return:
-      //    N/A
+      //    True  - The server successfully started.
+      //    False - The server did not successfully start.
       //
       //***************************************************************************************************************
       bool StartServer();
@@ -124,7 +125,7 @@ class Server : Subject
       // Method: TerminateServer
       //
       // Description:
-      //    TODO: Add description.
+      //    Terminates the listener thread so the server object can gracefully cleanup memory and shutdown.
       //
       // Arguments:
       //    N/A
@@ -140,13 +141,18 @@ class Server : Subject
       // Method: ConnectToDatabase
       //
       // Description:
-      //    Unregister an observer
+      //    Attempts to connect to the database using the passed in credentials.
       //
       // Arguments:
-      //    thepObserver - the observer object to be unregistered
+      //    theHost         - The hostname/IP address of the database.
+      //    thePortNumber   - The port number of the database.
+      //    theUser         - The user to log into the database.
+      //    thePassword     - The password for the user to log into the database.
+      //    theDatabaseName - The name of the database schema to connect to.
       //
       // Return:
-      //    N/A
+      //    True  - The connection to the database is successful.
+      //    False - The connection to the database has failed.
       //
       //***************************************************************************************************************
       bool ConnectToDatabase(const std::string theHost, const int thePortNumber, const std::string theUser,
@@ -275,6 +281,39 @@ class Server : Subject
       //
       //***************************************************************************************************************
       void BroadcastSend(const char* const theBuffer, const int theBystesRecieved);
+
+      //***************************************************************************************************************
+      //
+      // Method: SendObserversMessage
+      //
+      // Description:
+      //    This method sends the passed in information to all observers and frees up memory.
+      //
+      // Arguments:
+      //    thepMessage - The message to send to observers.
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void SendObserversMessage(Information* const thepMessage);
+
+      //***************************************************************************************************************
+      //
+      // Method: SendResponseMessage
+      //
+      // Description:
+      //    This methods converts the message into a fixed sized buffer and sends it to the passed in socket.
+      //
+      // Arguments:
+      //    theMessage - The message to be sent.
+      //    theSocket  - The connected socket to receive the message.
+      //
+      // Return:
+      //    N/A
+      //
+      //***************************************************************************************************************
+      void SendResponseMessage(const std::string theMessage, const SOCKET theSocket);
 
 //*********************************************************************************************************************
 // End - Methods
